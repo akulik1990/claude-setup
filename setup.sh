@@ -2,19 +2,15 @@
 set -euo pipefail
 
 # ============================================================
-# Claude Code & Claude Desktop - Three-Phase Setup Script
+# Claude Code & Claude Desktop - Setup Script
 # ============================================================
-# Phase 1 (bootstrap): Sets permissive permissions for setup
-# Phase 2 (install):   Installs skills, MCP servers
-# Phase 3 (finalize):  Applies daily-driver permissions
+# Single-command setup: applies daily-driver permissions,
+# installs skills and MCP servers.
 #
-# New machine quickstart:
-#   1. bash ~/.claude/setup/setup.sh bootstrap
-#   2. Restart Claude Code
-#   3. bash ~/.claude/setup/setup.sh install
-#   4. Restart Claude Code, run tests from TEST-INSTRUCTIONS.md
-#   5. bash ~/.claude/setup/setup.sh finalize
-#   6. Restart Claude Code
+# Usage:
+#   git clone https://github.com/akulik1990/claude-setup.git ~/.claude/setup
+#   bash ~/.claude/setup/setup.sh install
+#   # Restart Claude Code
 # ============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -23,7 +19,6 @@ SKILLS_DIR="$HOME_DIR/.claude/skills"
 SETUP_DIR="$HOME_DIR/.claude/setup"
 SETTINGS_FILE="$HOME_DIR/.claude/settings.json"
 LOCAL_SETTINGS_FILE="$HOME_DIR/.claude/settings.local.json"
-MARKER_FILE="$SETUP_DIR/.phase1-complete"
 
 # Colors
 RED='\033[0;31m'
@@ -45,22 +40,12 @@ usage() {
   echo "Usage: setup.sh <command>"
   echo ""
   echo "Commands:"
-  echo "  bootstrap   Phase 1: Set permissive permissions for setup"
-  echo "              (Run this first on a new machine, then restart Claude)"
+  echo "  install     Full setup: apply permissions, install skills, configure MCP servers"
   echo ""
-  echo "  install     Phase 2: Install skills, MCP servers"
-  echo "              (Run after restarting Claude post-bootstrap)"
-  echo ""
-  echo "  finalize    Phase 3: Apply daily-driver permissions"
-  echo "              (Run after tests pass from TEST-INSTRUCTIONS.md)"
-  echo ""
-  echo "New machine quickstart:"
-  echo "  1. bash ~/.claude/setup/setup.sh bootstrap"
-  echo "  2. Restart Claude Code"
-  echo "  3. bash ~/.claude/setup/setup.sh install"
-  echo "  4. Restart Claude Code, run tests from TEST-INSTRUCTIONS.md"
-  echo "  5. bash ~/.claude/setup/setup.sh finalize"
-  echo "  6. Restart Claude Code"
+  echo "Quick start:"
+  echo "  1. git clone https://github.com/akulik1990/claude-setup.git ~/.claude/setup"
+  echo "  2. bash ~/.claude/setup/setup.sh install"
+  echo "  3. Restart Claude Code"
   echo ""
 }
 
@@ -112,67 +97,23 @@ check_prereqs() {
 }
 
 # -----------------------------------------------------------
-# do_bootstrap() - Phase 1
-# Sets permissive permissions via settings.local.json
-# Empties settings.json so it doesn't interfere
-# -----------------------------------------------------------
-do_bootstrap() {
-  echo ""
-  echo "============================================"
-  echo "  Phase 1: Bootstrap (Permissive Setup)"
-  echo "============================================"
-  echo ""
-
-  mkdir -p "$SETUP_DIR"
-
-  # Empty out settings.json — all config goes through settings.local.json
-  info "Clearing ~/.claude/settings.json..."
-  echo '{}' > "$SETTINGS_FILE"
-  log "settings.json cleared"
-
-  # Write permissive settings.local.json (this is what Claude Code reads)
-  info "Writing permissive settings to ~/.claude/settings.local.json..."
-  cp "$SCRIPT_DIR/settings-bootstrap.json" "$LOCAL_SETTINGS_FILE"
-  log "Permissive settings.local.json written"
-
-  # Create marker for Phase 2
-  touch "$MARKER_FILE"
-  log "Phase 1 marker created"
-
-  echo ""
-  echo "============================================"
-  echo -e "  ${GREEN}Phase 1 (Bootstrap) Complete!${NC}"
-  echo "============================================"
-  echo ""
-  echo "  Permissive settings written to ~/.claude/settings.local.json"
-  echo "  All tools will be auto-approved for the setup phase."
-  echo ""
-  echo "  NEXT STEPS:"
-  echo "  1. Restart Claude Code (close and reopen terminal/session)"
-  echo "  2. Then run:  bash ~/.claude/setup/setup.sh install"
-  echo ""
-  echo "============================================"
-  echo ""
-}
-
-# -----------------------------------------------------------
-# do_install() - Phase 2
-# Installs skills, MCP servers. Does NOT change permissions.
+# do_install()
 # -----------------------------------------------------------
 do_install() {
   echo ""
   echo "============================================"
-  echo "  Phase 2: Install Skills & MCP Servers"
+  echo "  Claude Code Setup"
   echo "============================================"
   echo ""
 
-  # Check for Phase 1 marker
-  if [ ! -f "$MARKER_FILE" ]; then
-    warn "Phase 1 marker not found. If you haven't run 'setup.sh bootstrap',"
-    warn "you may see permission prompts during setup."
-    warn "Run 'setup.sh bootstrap' first, or press Enter to continue anyway."
-    read -r
-  fi
+  # -----------------------------------------------------------
+  # Apply daily-driver permissions upfront
+  # -----------------------------------------------------------
+  info "Applying daily-driver permissions..."
+  cp "$SCRIPT_DIR/settings-daily-driver.json" "$SETTINGS_FILE"
+  log "settings.json written"
+  cp "$SCRIPT_DIR/settings-daily-driver-local.json" "$LOCAL_SETTINGS_FILE"
+  log "settings.local.json written"
 
   # -----------------------------------------------------------
   # Check Prerequisites
@@ -248,7 +189,6 @@ do_install() {
     "callstackincubator/agent-skills.git|callstack-skills"
     "frmoretto/clarity-gate.git|clarity-gate"
     "op7418/NanoBanana-PPT-Skills.git|nanobanana-ppt"
-    # From awesome-llm-skills repo
     "Prat011/awesome-llm-skills.git|prat-skills"
     "smerchek/claude-epub-skill.git|epub-skill"
     "chrisvoncsefalvay/claude-d3js-skill.git|d3js-skill"
@@ -593,10 +533,6 @@ do_install() {
       "command": "$UVX_PATH",
       "args": ["mcp-server-fetch"]
     },
-    "git": {
-      "command": "$UVX_PATH",
-      "args": ["mcp-server-git", "--repository", "$HOME_DIR"]
-    },
     "sequential-thinking": {
       "command": "$NPX_PATH",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
@@ -619,7 +555,7 @@ DESKTOPEOF
   # -----------------------------------------------------------
   echo ""
   echo "============================================"
-  echo -e "  ${GREEN}Phase 2 (Install) Complete!${NC}"
+  echo -e "  ${GREEN}Setup Complete!${NC}"
   echo "============================================"
   echo ""
   echo "  Skills installed:  $TOTAL_SKILLS"
@@ -627,59 +563,13 @@ DESKTOPEOF
   echo "  MCP servers:       6 (filesystem, memory, fetch, puppeteer, sequential-thinking, git)"
   echo "  Desktop config:    ~/Library/Application Support/Claude/claude_desktop_config.json"
   echo ""
-  echo "  NEXT STEPS:"
-  echo "  1. Restart Claude Code"
-  echo "  2. Run tests from ~/.claude/setup/TEST-INSTRUCTIONS.md"
-  echo "  3. Once tests pass:  bash ~/.claude/setup/setup.sh finalize"
-  echo "  4. Restart Claude Code"
-  echo ""
-  echo "============================================"
-  echo ""
-}
-
-# -----------------------------------------------------------
-# do_finalize() - Phase 3
-# Applies daily-driver permissions after tests pass.
-# Writes to BOTH settings.json and settings.local.json:
-#   - settings.json:       hooks + deny + permissions (canonical config)
-#   - settings.local.json: permissions only (high-precedence layer)
-# -----------------------------------------------------------
-do_finalize() {
-  echo ""
-  echo "============================================"
-  echo "  Phase 3: Apply Daily-Driver Permissions"
-  echo "============================================"
-  echo ""
-
-  # Write daily-driver settings.json (canonical: hooks + deny + permissions)
-  info "Writing daily-driver settings to ~/.claude/settings.json..."
-  cp "$SCRIPT_DIR/settings-daily-driver.json" "$SETTINGS_FILE"
-  log "Daily-driver settings.json written"
-
-  # Write daily-driver settings.local.json (high-precedence permissions only)
-  info "Writing daily-driver settings to ~/.claude/settings.local.json..."
-  cp "$SCRIPT_DIR/settings-daily-driver-local.json" "$LOCAL_SETTINGS_FILE"
-  log "Daily-driver settings.local.json written"
-
-  # Remove Phase 1 marker
-  rm -f "$MARKER_FILE"
-
-  echo ""
-  echo "============================================"
-  echo -e "  ${GREEN}Phase 3 (Finalize) Complete!${NC}"
-  echo "============================================"
-  echo ""
   echo "  PERMISSIONS (daily-driver mode):"
   echo "    Auto-approved:  MCP tools, Read, Glob, Grep, WebFetch, WebSearch, safe Bash commands"
   echo "    Needs approval: Write, Edit, uncategorized Bash commands"
   echo "    Denied:         rm -rf /, fork bombs, force-push to main, etc."
   echo ""
-  echo "  Files written:"
-  echo "    ~/.claude/settings.json       (hooks + deny + permissions)"
-  echo "    ~/.claude/settings.local.json (permissions only, high precedence)"
-  echo ""
   echo "  NEXT STEP:"
-  echo "  Restart Claude Code to apply the new permission model."
+  echo "  Restart Claude Code to apply the new settings."
   echo ""
   echo "============================================"
   echo ""
@@ -689,14 +579,8 @@ do_finalize() {
 # Main Dispatch
 # -----------------------------------------------------------
 case "${1:-}" in
-  bootstrap|phase1)
-    do_bootstrap
-    ;;
-  install|phase2)
+  install)
     do_install
-    ;;
-  finalize|phase3)
-    do_finalize
     ;;
   *)
     usage

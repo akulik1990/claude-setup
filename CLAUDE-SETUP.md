@@ -5,15 +5,13 @@ This document contains instructions for Claude (the AI) to fully set up a new ma
 ## Quickstart (New Machine)
 
 ```bash
-# 1. Bootstrap: sets permissive permissions for setup
-bash ~/.claude/setup/setup.sh bootstrap
+# 1. Clone the repo
+git clone https://github.com/akulik1990/claude-setup.git ~/.claude/setup
 
-# 2. Reload Claude Code (close and reopen terminal/session)
-
-# 3. Install: full setup (skills, MCP, daily-driver permissions)
+# 2. Install: skills, MCP servers, and daily-driver permissions
 bash ~/.claude/setup/setup.sh install
 
-# 4. Restart Claude Code to apply daily-driver permissions
+# 3. Restart Claude Code to apply settings
 ```
 
 After setup, the **daily-driver** permission model is active:
@@ -105,7 +103,7 @@ git clone --depth 1 https://github.com/op7418/NanoBanana-PPT-Skills.git nanobana
 
 ### Copy Skills to Correct Locations
 
-The automated script `setup.sh` (see Step 7) handles this. The structure is:
+The automated script `setup.sh` handles this. The structure is:
 
 ```
 ~/.claude/skills/
@@ -184,10 +182,6 @@ Create/edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
       "command": "<HOME>/.local/bin/uvx",
       "args": ["mcp-server-fetch"]
     },
-    "git": {
-      "command": "<HOME>/.local/bin/uvx",
-      "args": ["mcp-server-git"]
-    },
     "sequential-thinking": {
       "command": "<FULL_PATH_TO_NPX>",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
@@ -196,44 +190,19 @@ Create/edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
+**Note:** The git MCP server is excluded from Claude Desktop because it requires a git repository context to function. Claude Desktop doesn't run in project directories, so the git server would constantly error. It's configured only for Claude Code, which operates in project directories.
+
 **Important:** Replace `<FULL_PATH_TO_NPX>` with the actual path (find via `which npx`) and `<HOME>` with the user's home directory (e.g. `/Users/jane` on macOS, `/home/jane` on Linux). Claude Desktop requires absolute paths because it doesn't inherit your shell PATH. The `setup.sh` script handles this automatically.
 
 ---
 
-## Step 5: Configure Hooks & Permissions
+## Step 5: Configure Permissions
 
-The setup script manages two different permission configurations:
-
-### Bootstrap Settings (Phase 1 — temporary, for setup only)
-
-During setup, everything is auto-approved so the install can run without prompts:
-
-```json
-{
-  "permissions": {
-    "allow": ["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch",
-              "mcp__memory", "mcp__filesystem", "mcp__puppeteer", "mcp__git",
-              "mcp__fetch", "mcp__sequential-thinking", "mcp__mcp-registry"],
-    "deny": ["Bash(rm -rf /)", "Bash(rm -rf ~)", "Bash(rm -rf /*)",
-             "Bash(:(){ :|:& };:)", "Bash(mkfs.*)", "Bash(dd if=*of=/dev/*)"]
-  },
-  "hooks": {
-    "PreToolUse": [{ "matcher": "*", "hooks": [{ "type": "command",
-      "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"allow\"}}'",
-      "timeout": 5 }] }]
-  }
-}
-```
-
-### Daily Driver Settings (Phase 2 — permanent, for normal use)
-
-After setup completes, a more restrictive config is applied:
+The setup script applies the daily-driver permission configuration during install:
 
 - **Auto-approved:** Read, Glob, Grep, WebFetch, WebSearch, all MCP tools, safe Bash patterns (git, npm, node, python3, ls, etc.)
 - **Requires approval:** Write, Edit, any Bash command not matching a safe pattern
 - **Denied:** rm -rf /, fork bombs, force-push to main/master, git reset --hard, git clean -fd, disk wiping
-
-The `PreToolUse` hook only covers MCP tools (`"matcher": "mcp__.*"`), not everything.
 
 ### How Permissions Work
 
@@ -308,45 +277,14 @@ To add a custom hook (e.g., auto-format after file edits):
 
 ---
 
-## Step 7: Automated Setup Script (Two-Phase)
-
-The setup script (`~/.claude/setup/setup.sh`) uses a two-phase approach:
-
-### Phase 1: Bootstrap
-```bash
-bash ~/.claude/setup/setup.sh bootstrap
-```
-- Writes permissive `settings.json` (auto-approve everything)
-- Removes `settings.local.json` if present
-- Creates a `.phase1-complete` marker file
-- **Action required:** Reload Claude Code after this step
-
-### Phase 2: Install
-```bash
-bash ~/.claude/setup/setup.sh install
-```
-- Checks for Phase 1 marker (warns if missing)
-- Installs prerequisites (uv/uvx)
-- Creates directory structure
-- Clones 40+ skill repositories and installs 300+ SKILL.md files
-- Configures 6 MCP servers for Claude Code and Claude Desktop
-- Writes daily-driver `settings.json` (Write/Edit require approval)
-- Cleans up marker file, settings.local.json, and temp files
-- **Action required:** Restart Claude Code after this step
-
-### Re-running
-To refresh skills or MCP servers later, just run `setup.sh install` again. If you need full permissive mode temporarily, run `setup.sh bootstrap` first, reload, then `setup.sh install`.
-
----
-
-## Step 8: Verification
+## Verification
 
 After setup, verify everything:
 
 ```bash
 # Check skills count
 find ~/.claude/skills -name "SKILL.md" | wc -l
-# Expected: ~273
+# Expected: ~316
 
 # Check MCP servers
 claude mcp list
@@ -386,7 +324,7 @@ claude mcp add --transport stdio --scope user SERVER_NAME -- COMMAND ARGS
 
 ### Updating Skills
 ```bash
-# Re-run the install phase to pull latest versions
+# Re-run install to pull latest versions
 bash ~/.claude/setup/setup.sh install
 ```
 
@@ -427,11 +365,11 @@ claude mcp remove SERVER_NAME --scope user
 
 ## MCP Servers Quick Reference
 
-| Server | Transport | Purpose |
-|--------|-----------|---------|
-| filesystem | npx (stdio) | Read/write files in user's home directory |
-| memory | npx (stdio) | Persistent knowledge graph across sessions |
-| fetch | uvx (stdio) | Fetch and extract content from URLs |
-| puppeteer | npx (stdio) | Browser automation, screenshots, page interaction |
-| sequential-thinking | npx (stdio) | Step-by-step reasoning for complex problems |
-| git | uvx (stdio) | Git operations (status, diff, log, commit) |
+| Server | Transport | Where | Purpose |
+|--------|-----------|-------|---------|
+| filesystem | npx (stdio) | Code + Desktop | Read/write files in user's home directory |
+| memory | npx (stdio) | Code + Desktop | Persistent knowledge graph across sessions |
+| fetch | uvx (stdio) | Code + Desktop | Fetch and extract content from URLs |
+| puppeteer | npx (stdio) | Code + Desktop | Browser automation, screenshots, page interaction |
+| sequential-thinking | npx (stdio) | Code + Desktop | Step-by-step reasoning for complex problems |
+| git | uvx (stdio) | Code only | Git operations (status, diff, log, commit) |

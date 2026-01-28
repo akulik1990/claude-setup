@@ -1,12 +1,12 @@
 # Claude Code Setup
 
-Three-phase setup system for Claude Code: installs 316 skills from 40+ repos, configures 6 MCP servers, and manages permissions.
+Single-command setup for Claude Code: installs 316 skills from 40+ repos, configures 6 MCP servers, and applies daily-driver permissions.
 
 ## What's Included
 
 - **316 skills** across 16 categories (Anthropic, Vercel, Sentry, Cloudflare, Stripe, databases, security, and more)
 - **6 MCP servers**: filesystem, memory, fetch, puppeteer, sequential-thinking, git
-- **Permission management**: permissive mode for setup, daily-driver mode for regular use
+- **Permission management**: daily-driver mode with safe defaults
 - **Claude Desktop config**: auto-configured alongside Claude Code
 
 ## Prerequisites
@@ -18,72 +18,29 @@ Three-phase setup system for Claude Code: installs 316 skills from 40+ repos, co
 
 ## Quick Start
 
-### 1. Clone the repo
-
 ```bash
+# 1. Clone the repo
 git clone https://github.com/akulik1990/claude-setup.git ~/.claude/setup
-```
 
-### 2. Bootstrap (permissive permissions)
-
-```bash
-bash ~/.claude/setup/setup.sh bootstrap
-```
-
-This clears `~/.claude/settings.json` and writes permissive permissions to `~/.claude/settings.local.json` so the install phase runs without prompts.
-
-**Restart Claude Code after this step.**
-
-### 3. Install (skills + MCP servers)
-
-```bash
+# 2. Run setup
 bash ~/.claude/setup/setup.sh install
+
+# 3. Restart Claude Code
 ```
 
-This clones 40+ skill repos, installs 316 skills to `~/.claude/skills/`, and configures 6 MCP servers for both Claude Code and Claude Desktop.
+That's it. After restarting, you'll have all skills, MCP servers, and permissions configured.
 
-**Restart Claude Code after this step.**
+## What Gets Configured
 
-### 4. Test
+### Permissions (daily-driver mode)
 
-Open Claude Code and ask it to run the tests:
+| Level | Tools |
+|-------|-------|
+| **Auto-approved** | MCP tools, Read, Glob, Grep, WebFetch, WebSearch, scoped Bash commands (git, npm, docker, etc.) |
+| **Requires approval** | Write, Edit, unscoped Bash |
+| **Denied** | `rm -rf /`, fork bombs, force-push to main, `git reset --hard`, etc. |
 
-```
-Run the setup test from ~/.claude/setup/TEST-INSTRUCTIONS.md
-```
-
-### 5. Finalize (daily-driver permissions)
-
-Once tests pass:
-
-```bash
-bash ~/.claude/setup/setup.sh finalize
-```
-
-This locks down permissions:
-- **Auto-approved**: MCP tools, Read, Glob, Grep, WebFetch, WebSearch, scoped Bash commands (git, npm, docker, etc.)
-- **Requires approval**: Write, Edit, unscoped Bash
-- **Denied**: `rm -rf /`, fork bombs, force-push to main, `git reset --hard`, etc.
-
-**Restart Claude Code after this step.**
-
-## File Structure
-
-```
-~/.claude/setup/
-├── setup.sh                        # Main setup script (3 phases)
-├── settings-bootstrap.json         # Permissive permissions (used during setup)
-├── settings-daily-driver.json      # Restrictive permissions + hooks + deny rules
-├── settings-daily-driver-local.json # Permissions-only (high-precedence layer)
-├── webdev-project-settings.json    # Per-project template (fully permissive)
-├── CLAUDE-SETUP.md                 # Detailed setup documentation
-├── TEST-INSTRUCTIONS.md            # Post-install test suite
-└── README.md                       # This file
-```
-
-## Settings Architecture
-
-Claude Code uses two settings files with different precedence:
+### Settings Architecture
 
 | File | Precedence | Purpose |
 |------|-----------|---------|
@@ -107,5 +64,17 @@ Pull the latest and re-run install:
 cd ~/.claude/setup
 git pull
 bash setup.sh install
-bash setup.sh finalize
+# Restart Claude Code
+```
+
+## File Structure
+
+```
+~/.claude/setup/
+├── setup.sh                        # Setup script
+├── settings-daily-driver.json      # Permissions + hooks + deny rules
+├── settings-daily-driver-local.json # Permissions-only (high-precedence layer)
+├── webdev-project-settings.json    # Per-project template (fully permissive)
+├── CLAUDE-SETUP.md                 # Detailed setup documentation
+└── README.md                       # This file
 ```
