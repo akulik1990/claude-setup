@@ -61,7 +61,8 @@
       "mcp__fetch__*",
       "mcp__puppeteer__*",
       "mcp__sequential-thinking__*",
-      "mcp__git__*"
+      "mcp__git__*",
+      "mcp__context7__*"
     ],
     "deny": [
       "Bash(rm -rf /)",

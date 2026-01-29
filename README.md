@@ -1,12 +1,13 @@
 # Claude Code Setup
 
-Single-command setup for Claude Code: installs 316 skills from 40+ repos, configures 6 MCP servers, and applies daily-driver permissions.
+Single-command setup for Claude Code: installs 316 skills from 40+ repos, configures 7 MCP servers, installs global CLAUDE.md instructions, and applies daily-driver permissions.
 
 ## What's Included
 
 - **316 skills** across 16 categories (Anthropic, Vercel, Sentry, Cloudflare, Stripe, databases, security, and more)
-- **6 MCP servers**: filesystem, memory, fetch, puppeteer, sequential-thinking, git
+- **7 MCP servers**: filesystem, memory, fetch, puppeteer, sequential-thinking, git, context7
 - **Permission management**: daily-driver mode with safe defaults
+- **Global CLAUDE.md**: behavioral instructions for automatic MCP/skill/agent usage
 - **Claude Desktop config**: auto-configured alongside Claude Code
 
 ## Prerequisites
@@ -28,7 +29,7 @@ bash ~/.claude/setup/setup.sh install
 # 3. Restart Claude Code
 ```
 
-That's it. After restarting, you'll have all skills, MCP servers, and permissions configured.
+That's it. After restarting, you'll have all skills, MCP servers, CLAUDE.md instructions, and permissions configured.
 
 ## What Gets Configured
 
@@ -72,6 +73,7 @@ bash setup.sh install
 ```
 ~/.claude/setup/
 ├── setup.sh                        # Setup script
+├── CLAUDE.md                       # Global behavioral instructions (copied to ~/.claude/CLAUDE.md)
 ├── settings-daily-driver.json      # Permissions + hooks + deny rules
 ├── settings-daily-driver-local.json # Permissions-only (high-precedence layer)
 ├── webdev-project-settings.json    # Per-project template (fully permissive)

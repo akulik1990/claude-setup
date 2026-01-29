@@ -492,7 +492,7 @@ do_install() {
 
   if command -v claude &>/dev/null; then
     # Remove existing servers first (ignore errors)
-    for server in filesystem memory fetch puppeteer sequential-thinking git; do
+    for server in filesystem memory fetch puppeteer sequential-thinking git context7; do
       claude mcp remove "$server" --scope user 2>/dev/null || true
     done
 
@@ -502,6 +502,7 @@ do_install() {
     claude mcp add --transport stdio --scope user puppeteer -- npx -y @modelcontextprotocol/server-puppeteer 2>/dev/null && log "Added puppeteer MCP" || warn "Failed to add puppeteer MCP"
     claude mcp add --transport stdio --scope user sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking 2>/dev/null && log "Added sequential-thinking MCP" || warn "Failed to add sequential-thinking MCP"
     claude mcp add --transport stdio --scope user git -- "$UVX_PATH" mcp-server-git 2>/dev/null && log "Added git MCP" || warn "Failed to add git MCP"
+    claude mcp add --transport stdio --scope user context7 -- npx -y @upstash/context7-mcp@latest 2>/dev/null && log "Added context7 MCP" || warn "Failed to add context7 MCP"
   else
     warn "Claude Code CLI not found - skipping MCP server setup for CLI"
   fi
@@ -545,6 +546,17 @@ DESKTOPEOF
     warn "Claude Desktop directory not found - skipping"
   fi
 
+  # -----------------------------------------------------------
+  # Install Global CLAUDE.md
+  # -----------------------------------------------------------
+  info "Installing global CLAUDE.md..."
+  if [ -f "$SCRIPT_DIR/CLAUDE.md" ]; then
+    cp "$SCRIPT_DIR/CLAUDE.md" "$HOME_DIR/.claude/CLAUDE.md"
+    log "Global CLAUDE.md installed"
+  else
+    warn "CLAUDE.md not found in setup directory - skipping"
+  fi
+
   # Remove temp files
   info "Cleaning up temporary files..."
   rm -rf "$TMPDIR"
@@ -560,7 +572,7 @@ DESKTOPEOF
   echo ""
   echo "  Skills installed:  $TOTAL_SKILLS"
   echo "  Skills location:   ~/.claude/skills/"
-  echo "  MCP servers:       6 (filesystem, memory, fetch, puppeteer, sequential-thinking, git)"
+  echo "  MCP servers:       7 (filesystem, memory, fetch, puppeteer, sequential-thinking, git, context7)"
   echo "  Desktop config:    ~/Library/Application Support/Claude/claude_desktop_config.json"
   echo ""
   echo "  PERMISSIONS (daily-driver mode):"

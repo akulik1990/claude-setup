@@ -155,6 +155,9 @@ claude mcp add --transport stdio --scope user sequential-thinking -- npx -y @mod
 
 # Git operations
 claude mcp add --transport stdio --scope user git -- "$HOME/.local/bin/uvx" mcp-server-git
+
+# Up-to-date library documentation (Context7)
+claude mcp add --transport stdio --scope user context7 -- npx -y @upstash/context7-mcp@latest
 ```
 
 Verify: `claude mcp list`
@@ -185,6 +188,10 @@ Create/edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
     "sequential-thinking": {
       "command": "<FULL_PATH_TO_NPX>",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "context7": {
+      "command": "<FULL_PATH_TO_NPX>",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
     }
   }
 }
@@ -274,6 +281,18 @@ To add a custom hook (e.g., auto-format after file edits):
   }
 }
 ```
+
+---
+
+## Step 7: Global CLAUDE.md (Behavioral Instructions)
+
+The setup script installs `~/.claude/CLAUDE.md`, which contains global behavioral instructions that Claude reads at the start of every session. This file tells Claude:
+
+- **When and how to use each MCP server** (Context7 for docs, Memory for persistence, Puppeteer for browser tasks, etc.)
+- **When to invoke skills proactively** (e.g., use `anthropic:pdf` for PDF tasks, `trailofbits:*` for security audits)
+- **Which agents to use** (Explore for codebase search, Plan for architecture, etc.)
+
+The file is maintained in the setup repo as `CLAUDE.md` and copied to `~/.claude/CLAUDE.md` during install. To customize, edit `~/.claude/CLAUDE.md` directly (it will be overwritten on next `setup.sh install`), or edit the source in the setup repo to make changes persistent.
 
 ---
 
@@ -373,3 +392,4 @@ claude mcp remove SERVER_NAME --scope user
 | puppeteer | npx (stdio) | Code + Desktop | Browser automation, screenshots, page interaction |
 | sequential-thinking | npx (stdio) | Code + Desktop | Step-by-step reasoning for complex problems |
 | git | uvx (stdio) | Code only | Git operations (status, diff, log, commit) |
+| context7 | npx (stdio) | Code + Desktop | Up-to-date library/framework documentation |
