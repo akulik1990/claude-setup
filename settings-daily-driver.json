@@ -69,7 +69,6 @@
       "Bash(rm -rf /)",
       "Bash(rm -rf ~)",
       "Bash(rm -rf /*)",
-      "Bash(:(){ :|:& };:)",
       "Bash(mkfs.*)",
       "Bash(dd if=*of=/dev/*)",
       "Bash(git push --force origin main)",
