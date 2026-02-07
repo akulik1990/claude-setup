@@ -68,7 +68,6 @@
       "Bash(rm -rf /)",
       "Bash(rm -rf ~)",
       "Bash(rm -rf /*)",
-      "Bash(:(){ :|:& };:)",
       "Bash(git push --force origin main)",
       "Bash(git push --force origin master)",
       "Bash(git reset --hard)",
